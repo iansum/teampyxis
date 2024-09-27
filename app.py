@@ -10,6 +10,67 @@ from mlxtend.preprocessing import TransactionEncoder
 import networkx as nx
 import matplotlib.pyplot as plt
 from folium.plugins import HeatMap
+from branca.element import Template, MacroElement
+
+
+
+# Add a legend to the map
+# Define the legend as a MacroElement
+legend_html = """
+{% macro html(this, kwargs) %}
+
+<div style='position: fixed; 
+            bottom: 50px; left: 50px; width: 200px; height: 90px; 
+            background-color: white; z-index:9999; font-size:14px; 
+            border:2px solid grey; padding: 10px;'>
+    <b>Legend:</b><br>
+    <i style='background:blue; 
+              border-radius:50%; width:10px; height:10px; 
+              display:inline-block;'></i>
+    Accident Location (Latitude, Longitude)
+</div>
+
+{% endmacro %}
+"""
+
+
+def create_cluster_legend_html(cluster_labels, cluster_colors):
+    legend_html = """
+    {% macro html(this, kwargs) %}
+
+    <div style='position: fixed;
+                bottom: 50px; left: 50px; width: 150px; height: auto;
+                background-color: white; z-index:9999; font-size:14px;
+                border:2px solid grey; padding: 10px;'>
+        <b>Legend:</b><br>
+    """
+
+    # Get the unique clusters and sort them
+    unique_clusters = sorted(set(cluster_labels))
+    for cluster_num in unique_clusters:
+        color = cluster_colors[cluster_num % len(cluster_colors)]
+        legend_html += f"""
+        <i style='background:{color};
+                  border-radius:50%; width:10px; height:10px;
+                  display:inline-block;'></i>
+        Cluster {cluster_num}<br>
+        """
+
+    legend_html += """
+    </div>
+    {% endmacro %}
+    """
+
+    return legend_html
+
+
+
+
+
+legend = MacroElement()
+legend._template = Template(legend_html)
+
+
 
 # Initialize session state to hold the uploaded data across views
 if 'data' not in st.session_state:
@@ -69,7 +130,8 @@ if view_option == 'Upload and Map Data':
 
     bounds = [[13.3, 123.3], [13.6, 123.5]]
     m.fit_bounds(bounds)
-
+    heat_map = m
+ 
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
         data.columns = map(str.lower, data.columns)
@@ -85,6 +147,11 @@ if view_option == 'Upload and Map Data':
                 st.write("Frequency of Accidents by Location:")
                 st.write(location_frequency)
 
+            # Add the legend to the initial map 'm_initial'
+            m.get_root().add_child(legend)
+
+
+
             center_lat = data['latitude'].mean()
             center_lon = data['longitude'].mean()
             m = folium.Map(location=[center_lat, center_lon], zoom_start=13)
@@ -99,15 +166,27 @@ if view_option == 'Upload and Map Data':
                     tooltip=generate_tooltip(row)
                 ).add_to(m)
 
+            # Add the legend to the initial map 'm_initial'
+            m.get_root().add_child(legend)
 
-                # Add heatmap of accident locations using Kernel Density Estimation
-                heat_data = data[['latitude', 'longitude']].dropna().values.tolist()
-                
-                # Only add heatmap if there is data available
-                if heat_data:
-                    HeatMap(heat_data).add_to(m)
-                else:
-                    st.warning("No data available for heatmap.")
+
+
+            st_folium(m, width=700, height=500)
+
+            # Add heatmap of accident locations using Kernel Density Estimation
+            heat_data = data[['latitude', 'longitude']].dropna().values.tolist()
+
+
+            heat_map = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_level)
+
+            bounds = [[13.3, 123.3], [13.6, 123.5]]
+            heat_map.fit_bounds(bounds)
+            
+            # Only add heatmap if there is data available
+            if heat_data:
+                HeatMap(heat_data).add_to(heat_map)
+            else:
+                st.warning("No data available for heatmap.")
 
 
         else:
@@ -116,7 +195,7 @@ if view_option == 'Upload and Map Data':
     else:
         st.write("Please upload a CSV file to visualize the map.")
 
-    st_folium(m, width=700, height=500)
+    st_folium(heat_map, width=700, height=500)
 
 elif view_option == 'Apply kmeans':
     st.title("Apply K-means clustering")
@@ -164,6 +243,15 @@ elif view_option == 'Apply kmeans':
                     tooltip=generate_tooltip(row)  # Using the dynamic tooltip function
                 ).add_to(m)
 
+            # Create the legend HTML
+            legend_html = create_cluster_legend_html(data['cluster'], cluster_colors)
+            legend = MacroElement()
+            legend._template = Template(legend_html)
+
+            # Add the legend to the map
+            m.get_root().add_child(legend)
+
+
             # Display the map with clusters
             st_folium(m, width=700, height=500)
 
@@ -207,6 +295,15 @@ elif view_option == 'Apply kmeans':
                     fill_color=cluster_colors[row['cluster'] % len(cluster_colors)],
                     tooltip=generate_tooltip(row)
                 ).add_to(m_opt)
+
+
+            # Create the legend HTML for the optimal clusters
+            legend_html_opt = create_cluster_legend_html(data['cluster'], cluster_colors)
+            legend_opt = MacroElement()
+            legend_opt._template = Template(legend_html_opt)
+
+            # Add the legend to the optimal map
+            m_opt.get_root().add_child(legend_opt)
 
             # Display the map with optimal clusters
             st_folium(m_opt, width=700, height=500)
