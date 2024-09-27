@@ -9,6 +9,7 @@ from mlxtend.frequent_patterns import apriori, association_rules
 from mlxtend.preprocessing import TransactionEncoder
 import networkx as nx
 import matplotlib.pyplot as plt
+from folium.plugins import HeatMap
 
 # Initialize session state to hold the uploaded data across views
 if 'data' not in st.session_state:
@@ -97,6 +98,18 @@ if view_option == 'Upload and Map Data':
                     fill_color='blue',
                     tooltip=generate_tooltip(row)
                 ).add_to(m)
+
+
+                # Add heatmap of accident locations using Kernel Density Estimation
+                heat_data = data[['latitude', 'longitude']].dropna().values.tolist()
+                
+                # Only add heatmap if there is data available
+                if heat_data:
+                    HeatMap(heat_data).add_to(m)
+                else:
+                    st.warning("No data available for heatmap.")
+
+
         else:
             st.error("The uploaded file must contain 'Latitude' and 'Longitude' columns.")
 
