@@ -85,7 +85,8 @@ with st.sidebar:
     view_option = st.radio(
         "Choose a View:",
         ('Upload and Map Data', 'Apply kmeans', 'Apply apriori'),
-        index=0
+        index=0,
+        key='view_option'
     )
 
 # Helper function to generate dynamic tooltip
@@ -123,7 +124,7 @@ def find_optimal_k(data, max_k=20):
 if view_option == 'Upload and Map Data':
     st.title("Upload CSV and Visualize Accident Data")
 
-    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv", key='file_uploader')
     center_lat, center_lon = 13.4246, 123.3904
     zoom_level = 12
     m = folium.Map(location=[center_lat, center_lon], zoom_start=zoom_level)
@@ -212,7 +213,7 @@ elif view_option == 'Apply kmeans':
 
 
             # Input for number of clusters
-            num_clusters = st.number_input('Select Number of Clusters:', min_value=2, max_value=10, value=3)
+            num_clusters = st.number_input('Select Number of Clusters:', min_value=2, max_value=10, value=3, key='num_clusters')
 
             # Apply K-means clustering based on user's selected number of clusters
             coords = data[['latitude', 'longitude']]
@@ -620,9 +621,9 @@ elif view_option == 'Apply apriori':
         st.write("Select the columns you want to include in the Apriori analysis:")
         # Get a list of columns that are categorical or can be treated as such
         potential_columns = data.select_dtypes(include=['object', 'category']).columns.tolist()
-        selected_columns = st.multiselect("Columns", potential_columns, default=potential_columns)
+        selected_columns = st.multiselect("Columns", potential_columns, default=potential_columns, key='apriori_columns')
 
-        if not selected_columns:
+        if not selected_columns:    
             st.error("Please select at least one column.")
         else:
             # Preprocess the data for Apriori
@@ -639,7 +640,7 @@ elif view_option == 'Apply apriori':
             df_te = pd.DataFrame(te_ary, columns=te.columns_)
 
             # Get minimum support from user
-            min_support = st.slider("Select minimum support:", min_value=0.01, max_value=1.0, value=0.1, step=0.01)
+            min_support = st.slider("Select minimum support:", min_value=0.01, max_value=1.0, value=0.1, step=0.01, key='min_support_slider')
 
             # Apply Apriori algorithm
             frequent_itemsets = apriori(df_te, min_support=min_support, use_colnames=True)
@@ -647,13 +648,14 @@ elif view_option == 'Apply apriori':
             if frequent_itemsets.empty:
                 st.warning("No frequent itemsets found with the selected minimum support.")
             else:
+                # Removed the frozenset word in the itemset column
                 st.write("Frequent Itemsets:")
                 itemsets = frequent_itemsets['itemsets'].apply(lambda x: ', '.join(list(x)) if isinstance(x, frozenset) else x)
                 frequent_combined = pd.concat([frequent_itemsets['support'], itemsets], axis=1)
                 st.write(frequent_combined)
 
                 # Get minimum confidence from user
-                min_confidence = st.slider("Select minimum confidence:", min_value=0.01, max_value=1.0, value=0.5, step=0.01)
+                min_confidence = st.slider("Select minimum confidence:", min_value=0.01, max_value=1.0, value=0.5, step=0.01, key='min_confidence_slider')
 
                 # Generate association rules
                 rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=min_confidence)
@@ -661,6 +663,7 @@ elif view_option == 'Apply apriori':
                 if rules.empty:
                     st.warning("No association rules found with the selected minimum confidence.")
                 else:
+                    # Removed the frozenset word in the antecedent and consequent columns
                     # Convert frozensets in 'antecedents' and 'consequents' to lists or strings
                     antecedent = rules['antecedents'].apply(lambda x: ', '.join(list(x)) if isinstance(x, frozenset) else x)
                     consequent = rules['consequents'].apply(lambda x: ', '.join(list(x)) if isinstance(x, frozenset) else x)
@@ -690,4 +693,4 @@ elif view_option == 'Apply apriori':
                     nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=20)
                     nx.draw_networkx_labels(G, pos, font_size=10)
                     plt.axis('off')
-                    st.pyplot(plt)
+                    st.pyplot(plt)      
