@@ -355,21 +355,25 @@ elif view_option == 'Apply kmeans':
         if 'time' in data.columns and 'cause of accidents' in data.columns:
             st.header("K-Means Clustering for Time of Day vs Cause of Accident")
 
-            # Map "Time of Day" to numerical values starting from 0
-            time_mapping = {
-                'Morning': 0,
-                'Afternoon': 1,
-                'Evening': 2,
-                'Night': 3
-            }
-            data['time_numeric'] = data['time'].map(time_mapping)
 
-            # Check if mapping was successful
+
+            # Define custom time mapping
+            custom_time_mapping = {
+               'Morning' : 0,
+               'Afternoon': 1,
+               'Evening' : 2,
+               'Night' : 3
+            }
+
+   
+            data['time_numeric'] =  data['time'].map(custom_time_mapping)
+
+            # Check for unmapped values
             if data['time_numeric'].isnull().any():
-                st.error("There are unmapped 'time of day' values. Please make sure all time periods are defined.")
+                st.error("There are unmapped 'time of day' values. Please ensure all time periods are defined")
 
             # Encoding "Cause of Accident" column into numeric form
-            cause_of_accident_encoded = pd.factorize(data['cause of accidents'])[0]
+            cause_of_accident_encoded, cause_of_accident_categories = pd.factorize(data['cause of accidents'])
 
             # Drop any rows with missing values in 'time_numeric' or 'cause of accidents'
             time_accident_data = data[['time_numeric', 'cause of accidents']].dropna()
@@ -398,9 +402,14 @@ elif view_option == 'Apply kmeans':
             st.pyplot(fig)
 
             # # Optional: Show the legend for the "Time of Day" mapping
-            # st.write("Time of Day Mapping:")
-            # st.write(time_mapping)
+            st.write("Time of Day Mapping:")
+            reversed_time_mapping = {v : k for k, v in custom_time_mapping.items()}
+            st.write(reversed_time_mapping)
 
+            st.write("Cause of Accident Mapping:")
+            cause_of_accidents_mapping = dict(enumerate(cause_of_accident_categories))
+            st.write(cause_of_accidents_mapping)
+            
         else:
             st.error("The dataset must contain 'time of day' and 'cause of accidents' columns.")
 
