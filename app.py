@@ -639,6 +639,14 @@ elif view_option == 'Apply apriori':
     else:
         data = st.session_state['data']
 
+        # Define the age groups for victims and suspects
+        age_bins = [0, 12, 19, 35, 50, 65, 100]
+        age_labels = ['Child', 'Teen', 'Young Adult', 'Middle-aged Adult', 'Older Adult', 'Senior']
+
+        # Group 'Victims Age' and 'Suspects Age' into these categories
+        data['victims_age_group'] = pd.cut(data['victims age'], bins=age_bins, labels=age_labels, right=False)
+        data['suspects_age_group'] = pd.cut(data['suspects age'], bins=age_bins, labels=age_labels, right=False)
+
         # Select columns for Apriori analysis
         st.write("Select the columns you want to include in the Apriori analysis:")
         # Get a list of columns that are categorical or can be treated as such
