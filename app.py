@@ -626,6 +626,23 @@ elif view_option == 'Apply apriori':
     else:
         data = st.session_state['data']
 
+        # Since the victims gender and suspects have similar values of M and F. I am going to make them distinguished from one another
+        custom_victimsgender_mapping = {
+            'M' : 'Male (Victim)',
+            'F' :  'Female (Victim)'
+        }
+        custom_suspectsgender_mapping = {
+            'M' : 'Male (Suspect)',
+            'F' : 'Female (Suspect)'
+        }
+
+         # change the values using the custom mapping for victims gender
+        data['victims gender'] = data['victims gender'].map(custom_victimsgender_mapping)
+
+         # change the values using the custom mapping for suspects gender
+        data['suspects gender'] = data['suspects gender'].map(custom_suspectsgender_mapping)
+
+
         # Select columns for Apriori analysis
         st.write("Select the columns you want to include in the Apriori analysis:")
         # Get a list of columns that are categorical or can be treated as such
