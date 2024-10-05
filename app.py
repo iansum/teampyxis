@@ -661,7 +661,7 @@ elif view_option == 'Apply apriori':
                 st.write("Frequent Itemsets:")
                 itemsets = frequent_itemsets['itemsets'].apply(lambda x: ', '.join(list(x)) if isinstance(x, frozenset) else x)
                 frequent_combined = pd.concat([frequent_itemsets['support'], itemsets], axis=1)
-                st.write(frequent_combined)
+                st.write(frequent_combined.style.format({"support" : "{:.4f}"}))
 
                 # Get minimum confidence from user
                 min_confidence = st.slider("Select minimum confidence:", min_value=0.01, max_value=1.0, value=0.5, step=0.01, key='min_confidence_slider')
@@ -683,7 +683,7 @@ elif view_option == 'Apply apriori':
 
                     # Display the modified association rules
                     st.write("Association Rules:")
-                    st.write(association_combined)
+                    st.write(association_combined.style.format({"support" : "{:.4f}", "confidence" : "{:.4f}", "lift" : "{:.4f}"}))
 
                     # Optional: Visualize the rules using a network graph
                     st.write("Association Rules Network Graph:")
