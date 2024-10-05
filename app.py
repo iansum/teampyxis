@@ -295,7 +295,7 @@ elif view_option == 'Apply kmeans':
             optimal_silhouette_score = silhouette_scores[optimal_k]
             results.append(['Latitude and Longitude', optimal_k, optimal_silhouette_score])  
 
-            st.write(f"The optimal number of clusters is {optimal_k} with a Silhouette Score of {optimal_silhouette_score:.3f}")
+            st.write(f"The optimal number of clusters is {optimal_k} with a Silhouette Score of {optimal_silhouette_score:.4f}")
 
             # Automatically apply K-means clustering with the optimal number of clusters
             kmeans_opt = KMeans(n_clusters=optimal_k, random_state=42)
@@ -353,7 +353,7 @@ elif view_option == 'Apply kmeans':
             
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}") 
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}") 
 
 
             # Now perform k-means clustering with the optimal_k
@@ -406,7 +406,7 @@ elif view_option == 'Apply kmeans':
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
 
             # Now perform k-means clustering with the optimal_k
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -456,7 +456,7 @@ elif view_option == 'Apply kmeans':
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
 
             # Now perform k-means clustering with the optimal_k
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -506,7 +506,7 @@ elif view_option == 'Apply kmeans':
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
 
             # Now perform k-means clustering with the optimal_k
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -556,7 +556,7 @@ elif view_option == 'Apply kmeans':
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
 
             # Now perform k-means clustering with the optimal_k
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -615,7 +615,7 @@ elif view_option == 'Apply kmeans':
 
                 # Display the optimal k and silhouette score
                 st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-                st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
+                st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
 
                 # Now perform k-means clustering with the optimal_k
                 kmeans = KMeans(n_clusters=optimal_k, random_state=42)
