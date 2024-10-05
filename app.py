@@ -221,6 +221,11 @@ elif view_option == 'Apply kmeans':
     else:
         data = st.session_state['data']
 
+        # Initialize a list to collect results for each clustering category
+        results = []
+
+
+        # Perform K-means for each category and collect the results 
 
         # --- K-means clustering: Latitude vs Longitude
         if 'latitude' in data.columns and 'longitude' in data.columns:
@@ -288,6 +293,7 @@ elif view_option == 'Apply kmeans':
             # Find the optimal number of clusters
             optimal_k = max(silhouette_scores, key=silhouette_scores.get)
             optimal_silhouette_score = silhouette_scores[optimal_k]
+            results.append(['Latitude and Longitude', optimal_k, optimal_silhouette_score])  
 
             st.write(f"The optimal number of clusters is {optimal_k} with a Silhouette Score of {optimal_silhouette_score:.3f}")
 
@@ -343,7 +349,8 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(age_data)
-
+            results.append(['Victims and Suspects Age', optimal_k, optimal_silhouette_score])
+            
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
             st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}") 
@@ -394,6 +401,8 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(time_accident_data[['time_numeric', 'cause of accidents']])
+            results.append(['Time vs Cause of Accident', optimal_k, optimal_silhouette_score])
+
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
@@ -443,6 +452,7 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(vk_age_data)
+            results.append(['Vehicle Kind vs Suspects Age', optimal_k, optimal_silhouette_score])
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
@@ -492,6 +502,7 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(va_cause_data)
+            results.append(['Victims Age vs Cause of Accidents', optimal_k, optimal_silhouette_score])
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
@@ -541,6 +552,7 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(vk_victim_age_data)
+            results.append(['Vehicle Kind vs Victims Age', optimal_k, optimal_silhouette_score])
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
@@ -599,6 +611,7 @@ elif view_option == 'Apply kmeans':
             else:
                 # Find the optimal k using silhouette method
                 optimal_k, optimal_silhouette_score = find_optimal_k(year_cause_data)
+                results.append(['Year vs Cause of Accidents', optimal_k, optimal_silhouette_score])
 
                 # Display the optimal k and silhouette score
                 st.write(f"**Optimal number of clusters (k):** {optimal_k}")
@@ -630,6 +643,13 @@ elif view_option == 'Apply kmeans':
                 st.write(cause_mapping)
         else:
             st.error("The dataset must contain 'year' (or 'date') and 'cause of accidents' columns.")
+
+        # Create a DataFrame from the results
+        summary_df = pd.DataFrame(results, columns=['Category', 'Optimal Cluster', 'Silhouette Score'])
+
+        # Display the table in Streamlit
+        st.header("Summary of Clustering Results:")
+        st.write(summary_df)
 
 elif view_option == 'Apply apriori':
     st.title("Apriori Algorithm Analysis")
