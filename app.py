@@ -644,8 +644,8 @@ elif view_option == 'Apply apriori':
         age_labels = ['Child', 'Teen', 'Young Adult', 'Middle-aged Adult', 'Older Adult', 'Senior']
 
         # Group 'Victims Age' and 'Suspects Age' into these categories
-        data['victims_age_group'] = pd.cut(data['victims age'], bins=age_bins, labels=age_labels, right=False)
-        data['suspects_age_group'] = pd.cut(data['suspects age'], bins=age_bins, labels=age_labels, right=False)
+        data['victims age group'] = pd.cut(data['victims age'], bins=age_bins, labels=age_labels, right=False)
+        data['suspects age group'] = pd.cut(data['suspects age'], bins=age_bins, labels=age_labels, right=False)
 
         # Select columns for Apriori analysis
         st.write("Select the columns you want to include in the Apriori analysis:")
