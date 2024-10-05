@@ -136,6 +136,25 @@ if view_option == 'Upload and Map Data':
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
         data.columns = map(str.lower, data.columns)
+
+
+        # Since the victims gender and suspects have similar values of M and F. I am going to make them distinguished from one another
+        custom_victimsgender_mapping = {
+            'M' : 'Male (Victim)',
+            'F' :  'Female (Victim)'
+        }
+        custom_suspectsgender_mapping = {
+            'M' : 'Male (Suspect)',
+            'F' : 'Female (Suspect)'
+        }
+
+        # change the values using the custom mapping for victims gender
+        data['victims gender'] = data['victims gender'].map(custom_victimsgender_mapping)
+
+        # change the values using the custom mapping for suspects gender
+        data['suspects gender'] = data['suspects gender'].map(custom_suspectsgender_mapping)
+
+
         st.session_state['data'] = data
 
         st.write("Uploaded Data:")
@@ -354,8 +373,6 @@ elif view_option == 'Apply kmeans':
 
         if 'time' in data.columns and 'cause of accidents' in data.columns:
             st.header("K-Means Clustering for Time of Day vs Cause of Accident")
-
-
 
             # Define custom time mapping
             custom_time_mapping = {
@@ -625,23 +642,6 @@ elif view_option == 'Apply apriori':
         st.error("Please upload data in the 'Upload and Map Data' view first.")
     else:
         data = st.session_state['data']
-
-        # Since the victims gender and suspects have similar values of M and F. I am going to make them distinguished from one another
-        custom_victimsgender_mapping = {
-            'M' : 'Male (Victim)',
-            'F' :  'Female (Victim)'
-        }
-        custom_suspectsgender_mapping = {
-            'M' : 'Male (Suspect)',
-            'F' : 'Female (Suspect)'
-        }
-
-         # change the values using the custom mapping for victims gender
-        data['victims gender'] = data['victims gender'].map(custom_victimsgender_mapping)
-
-         # change the values using the custom mapping for suspects gender
-        data['suspects gender'] = data['suspects gender'].map(custom_suspectsgender_mapping)
-
 
         # Select columns for Apriori analysis
         st.write("Select the columns you want to include in the Apriori analysis:")
