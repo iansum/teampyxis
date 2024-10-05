@@ -136,7 +136,9 @@ if view_option == 'Upload and Map Data':
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
         data.columns = map(str.lower, data.columns)
-
+        st.session_state['data'] = data
+        st.write("Uploaded Data:")
+        st.write(data.head())
 
         # Since the victims gender and suspects have similar values of M and F. I am going to make them distinguished from one another
         custom_victimsgender_mapping = {
@@ -153,12 +155,6 @@ if view_option == 'Upload and Map Data':
 
         # change the values using the custom mapping for suspects gender
         data['suspects gender'] = data['suspects gender'].map(custom_suspectsgender_mapping)
-
-
-        st.session_state['data'] = data
-
-        st.write("Uploaded Data:")
-        st.write(data.head())
 
         if 'latitude' in data.columns and 'longitude' in data.columns:
             if 'location' in data.columns:
