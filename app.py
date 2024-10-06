@@ -144,8 +144,21 @@ if view_option == 'Upload and Map Data':
 
 
         # Since the victims gender and suspects have similar values of M and F. I am going to make them distinguished from one another
-        data['victims gender'] = data['victims gender'].astype(str) + ' (Victim)'
-        data['suspects gender'] = data['suspects gender'].astype(str) + ' (Suspect)'
+        custom_victimsgender_mapping = {
+            'M' : 'Male (Victim)',
+            'F' :  'Female (Victim)'
+        }
+        custom_suspectsgender_mapping = {
+            'M' : 'Male (Suspect)',
+            'F' : 'Female (Suspect)'
+        }
+
+
+        # change the values using the custom mapping for victims gender
+        data['victims gender'] = data['victims gender'].map(custom_victimsgender_mapping)
+
+        # change the values using the custom mapping for suspects gender
+        data['suspects gender'] = data['suspects gender'].map(custom_suspectsgender_mapping)
 
 
         # Define the age groups for victims and suspects
