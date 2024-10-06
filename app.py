@@ -79,12 +79,13 @@ if 'data' not in st.session_state:
 # # Title of the app
 # st.title('Mapping of Accident Prone Zone for Data Visualization and Analysis')
 
+
 # Sidebar with options
 with st.sidebar:
     st.write("Navigation")
     view_option = st.radio(
         "Choose a View:",
-        ('Upload and Map Data', 'Apply kmeans', 'Apply apriori'),
+        ('Upload and Map Data', 'Frequency Tables', 'Apply kmeans', 'Apply apriori'),
         index=0,
         key='view_option'
     )
@@ -136,25 +137,31 @@ if view_option == 'Upload and Map Data':
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
         data.columns = map(str.lower, data.columns)
-        st.session_state['data'] = data
+
+
         st.write("Uploaded Data:")
         st.write(data.head())
 
+
         # Since the victims gender and suspects have similar values of M and F. I am going to make them distinguished from one another
-        custom_victimsgender_mapping = {
-            'M' : 'Male (Victim)',
-            'F' :  'Female (Victim)'
-        }
-        custom_suspectsgender_mapping = {
-            'M' : 'Male (Suspect)',
-            'F' : 'Female (Suspect)'
-        }
+        data['victims gender'] = data['victims gender'].astype(str) + ' (Victim)'
+        data['suspects gender'] = data['suspects gender'].astype(str) + ' (Suspect)'
 
-        # change the values using the custom mapping for victims gender
-        data['victims gender'] = data['victims gender'].map(custom_victimsgender_mapping)
 
-        # change the values using the custom mapping for suspects gender
-        data['suspects gender'] = data['suspects gender'].map(custom_suspectsgender_mapping)
+        # Define the age groups for victims and suspects
+        age_bins = [0, 12, 19, 35, 50, 65, 100]
+        age_labels = ['Child (0-12)', 'Teen (13-19)', 'Young Adult (20-35)', 'Middle-aged Adult (36-50)', 'Older Adult (51-65)', 'Senior (66 and above)']
+
+        # Group 'Victims Age' and 'Suspects Age' into these categories
+        data['victims age group'] = pd.cut(data['victims age'], bins=age_bins, labels=age_labels, right=False)
+        data['suspects age group'] = pd.cut(data['suspects age'], bins=age_bins, labels=age_labels, right=False)
+
+
+        # Ensure the columns are treated as strings before concatenation
+        data['victims age group'] = data['victims age group'].astype(str) + ' (Victim)'
+        data['suspects age group'] = data['suspects age group'].astype(str) + ' (Suspect)'
+
+        st.session_state['data'] = data
 
         if 'latitude' in data.columns and 'longitude' in data.columns:
             if 'location' in data.columns:
@@ -213,6 +220,67 @@ if view_option == 'Upload and Map Data':
 
     st_folium(heat_map, width=700, height=500)
 
+
+elif view_option == 'Frequency Tables':
+    st.title("Frequency Counts and Percentages for Categorical Data")
+    if st.session_state['data'] is None:
+        st.error("Please upload data in the 'Upload and Map Data' view first.")
+    else:
+        data = st.session_state['data']
+        # Identify categorical columns
+        categorical_columns = data.select_dtypes(include=['object', 'category']).columns.tolist()
+        if not categorical_columns:
+            st.error("No categorical columns found in the data.")
+        else:
+            # Let user select which columns to display
+
+            selectedcolumns = st.multiselect("Columns_", categorical_columns, default=categorical_columns, key='apriori_columns')
+
+                
+            if not selectedcolumns:
+                st.write("Please select at least one column.")
+            else:
+                for col in selectedcolumns:
+                    st.write(f"**Frequency table for '{col}':**")
+                    # Compute frequency counts and percentages
+                    counts = data[col].value_counts(dropna=False)
+                    percentages = data[col].value_counts(normalize=True, dropna=False) * 100
+
+                    # Create the frequency table with 'Category' as a column
+                    freq_table = pd.DataFrame({
+                        'Category': counts.index,
+                        'Count': counts.values,
+                        'Percentage (%)': percentages.round(2).values
+                    })
+
+                    # Calculate total counts and percentages
+                    total_counts = counts.sum()
+                    total_percentage = percentages.sum()
+
+                    # Append the total row
+                    total_row = pd.DataFrame({
+                        'Category': ['Total'],
+                        'Count': [total_counts],
+                        'Percentage (%)': [total_percentage.round(2)]
+                    })
+
+                    freq_table = pd.concat([freq_table, total_row], ignore_index=True)
+
+
+                    # # Create 'No.' column starting from 0
+                    # freq_table.insert(0, 'No.', range(len(freq_table)))
+
+                  
+                    # Reset the index and drop the old index
+                    freq_table.reset_index(drop=True, inplace=True)
+
+
+                    # Display the frequency table without the extra index
+                    st.write(freq_table)
+
+
+
+
 elif view_option == 'Apply kmeans':
     st.title("Apply K-means clustering")
 
@@ -221,11 +289,6 @@ elif view_option == 'Apply kmeans':
     else:
         data = st.session_state['data']
 
-        # Initialize a list to collect results for each clustering category
-        results = []
-
-
-        # Perform K-means for each category and collect the results 
 
         # --- K-means clustering: Latitude vs Longitude
         if 'latitude' in data.columns and 'longitude' in data.columns:
@@ -293,9 +356,8 @@ elif view_option == 'Apply kmeans':
             # Find the optimal number of clusters
             optimal_k = max(silhouette_scores, key=silhouette_scores.get)
             optimal_silhouette_score = silhouette_scores[optimal_k]
-            results.append(['Latitude and Longitude', optimal_k, optimal_silhouette_score])  
 
-            st.write(f"The optimal number of clusters is {optimal_k} with a Silhouette Score of {optimal_silhouette_score:.4f}")
+            st.write(f"The optimal number of clusters is {optimal_k} with a Silhouette Score of {optimal_silhouette_score:.3f}")
 
             # Automatically apply K-means clustering with the optimal number of clusters
             kmeans_opt = KMeans(n_clusters=optimal_k, random_state=42)
@@ -349,11 +411,10 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(age_data)
-            results.append(['Victims and Suspects Age', optimal_k, optimal_silhouette_score])
-            
+
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}") 
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}") 
 
 
             # Now perform k-means clustering with the optimal_k
@@ -376,6 +437,8 @@ elif view_option == 'Apply kmeans':
 
         if 'time' in data.columns and 'cause of accidents' in data.columns:
             st.header("K-Means Clustering for Time of Day vs Cause of Accident")
+
+
 
             # Define custom time mapping
             custom_time_mapping = {
@@ -401,12 +464,10 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(time_accident_data[['time_numeric', 'cause of accidents']])
-            results.append(['Time vs Cause of Accident', optimal_k, optimal_silhouette_score])
-
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
 
             # Now perform k-means clustering with the optimal_k
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -452,11 +513,10 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(vk_age_data)
-            results.append(['Vehicle Kind vs Suspects Age', optimal_k, optimal_silhouette_score])
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
 
             # Now perform k-means clustering with the optimal_k
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -502,11 +562,10 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(va_cause_data)
-            results.append(['Victims Age vs Cause of Accidents', optimal_k, optimal_silhouette_score])
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
 
             # Now perform k-means clustering with the optimal_k
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -552,11 +611,10 @@ elif view_option == 'Apply kmeans':
 
             # Find the optimal k using silhouette method
             optimal_k, optimal_silhouette_score = find_optimal_k(vk_victim_age_data)
-            results.append(['Vehicle Kind vs Victims Age', optimal_k, optimal_silhouette_score])
 
             # Display the optimal k and silhouette score
             st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
+            st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
 
             # Now perform k-means clustering with the optimal_k
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -611,11 +669,10 @@ elif view_option == 'Apply kmeans':
             else:
                 # Find the optimal k using silhouette method
                 optimal_k, optimal_silhouette_score = find_optimal_k(year_cause_data)
-                results.append(['Year vs Cause of Accidents', optimal_k, optimal_silhouette_score])
 
                 # Display the optimal k and silhouette score
                 st.write(f"**Optimal number of clusters (k):** {optimal_k}")
-                st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.4f}")
+                st.write(f"**Optimal silhouette score:** {optimal_silhouette_score:.3f}")
 
                 # Now perform k-means clustering with the optimal_k
                 kmeans = KMeans(n_clusters=optimal_k, random_state=42)
@@ -644,13 +701,6 @@ elif view_option == 'Apply kmeans':
         else:
             st.error("The dataset must contain 'year' (or 'date') and 'cause of accidents' columns.")
 
-        # Create a DataFrame from the results
-        summary_df = pd.DataFrame(results, columns=['Category', 'Optimal Cluster', 'Silhouette Score'])
-
-        # Display the table in Streamlit
-        st.header("Summary of Clustering Results:")
-        st.write(summary_df)
-
 elif view_option == 'Apply apriori':
     st.title("Apriori Algorithm Analysis")
 
@@ -659,20 +709,35 @@ elif view_option == 'Apply apriori':
     else:
         data = st.session_state['data']
 
-        # Define the age groups for victims and suspects
-        age_bins = [0, 12, 19, 35, 50, 65, 100]
-        age_labels = ['Child', 'Teen', 'Young Adult', 'Middle-aged Adult', 'Older Adult', 'Senior']
+        # # Since the victims gender and suspects have similar values of M and F. I am going to make them distinguished from one another
+        # custom_victimsgender_mapping = {
+        #     'M' : 'Male (Victim)',
+        #     'F' :  'Female (Victim)'
+        # }
+        # custom_suspectsgender_mapping = {
+        #     'M' : 'Male (Suspect)',
+        #     'F' : 'Female (Suspect)'
+        # }
 
-        # Group 'Victims Age' and 'Suspects Age' into these categories
-        data['victims age group'] = pd.cut(data['victims age'], bins=age_bins, labels=age_labels, right=False)
-        data['suspects age group'] = pd.cut(data['suspects age'], bins=age_bins, labels=age_labels, right=False)
+        #  # change the values using the custom mapping for victims gender
+        # data['victims gender'] = data['victims gender'].map(custom_victimsgender_mapping)
+
+        #  # change the values using the custom mapping for suspects gender
+        # data['suspects gender'] = data['suspects gender'].map(custom_suspectsgender_mapping)
+
 
         # Select columns for Apriori analysis
         st.write("Select the columns you want to include in the Apriori analysis:")
+
         # Get a list of columns that are categorical or can be treated as such
         potential_columns = data.select_dtypes(include=['object', 'category']).columns.tolist()
+
+
+
         selected_columns = st.multiselect("Columns", potential_columns, default=potential_columns, key='apriori_columns')
 
+
+            
         if not selected_columns:    
             st.error("Please select at least one column.")
         else:
@@ -743,4 +808,4 @@ elif view_option == 'Apply apriori':
                     nx.draw_networkx_edges(G, pos, arrowstyle='->', arrowsize=20)
                     nx.draw_networkx_labels(G, pos, font_size=10)
                     plt.axis('off')
-                    st.pyplot(plt)      
+                    st.pyplot(plt) 
