@@ -489,19 +489,17 @@ elif view_option == 'Apply kmeans':
             # Plotting the clustering results
             fig, ax = plt.subplots(figsize=(8, 6))
             scatter = ax.scatter(time_accident_data['time_numeric'], time_accident_data['cause of accidents'], c=time_accident_data['Cluster'], cmap='viridis')
-            ax.set_xlabel('Time of Day (Numeric)')
+            ax.set_xlabel('Time of Day')
             ax.set_ylabel('Cause of Accident (Encoded)')
             ax.set_title(f'K-Means Clustering for Time of the day vs Cause of Accident with k={optimal_k}')
             plt.colorbar(scatter, label='Cluster')
 
+            # Set xticks and xticklabels 
+            ax.set_xticks([0, 1, 2, 3])
+            ax.set_xticklabels(['Morning', 'Afternoon', 'Evening', 'Night'])
+
             # Display the plot in Streamlit
             st.pyplot(fig)
-
-            # # Optional: Show the legend for the "Time of Day" mapping
-            st.write("Time of Day Mapping:")
-            reversed_time_mapping = {v : k for k, v in custom_time_mapping.items()}
-            st.write(reversed_time_mapping)
-
             st.write("Cause of Accident Mapping:")
             cause_of_accidents_mapping = dict(enumerate(cause_of_accident_categories))
             st.write(cause_of_accidents_mapping)
