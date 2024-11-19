@@ -11,6 +11,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from folium.plugins import HeatMap
 from branca.element import Template, MacroElement
+import plotly.express as     px # type: ignore
 
 
 
@@ -85,7 +86,7 @@ with st.sidebar:
     st.write("Navigation")
     view_option = st.radio(
         "Choose a View:",
-        ('Upload and Map Data', 'Frequency Tables', 'Apply kmeans', 'Apply apriori'),
+        ('Upload and Map Data', 'Frequency Distribution', 'Apply kmeans', 'Apply apriori'),
         index=0,
         key='view_option'
     )
@@ -234,64 +235,87 @@ if view_option == 'Upload and Map Data':
     st_folium(heat_map, width=700, height=500)
 
 
-elif view_option == 'Frequency Tables':
+elif view_option == 'Frequency Distribution':
     st.title("Frequency Counts and Percentages for Categorical Data")
     if st.session_state['data'] is None:
         st.error("Please upload data in the 'Upload and Map Data' view first.")
     else:
         data = st.session_state['data']
+
         # Identify categorical columns
         categorical_columns = data.select_dtypes(include=['object', 'category']).columns.tolist()
-        if not categorical_columns:
-            st.error("No categorical columns found in the data.")
-        else:
-            # Let user select which columns to display
+ 
+        # Radio button to switch between Graph and Table view
+        view_mode = st.radio('Choose presentation kind', 
+                             ('Table', 'Graph'),
+                             index=0,
+                             key="tableORgraph"
+        ) 
+        
+        if view_mode == 'Table':
 
-            selectedcolumns = st.multiselect("Columns_", categorical_columns, default=categorical_columns, key='apriori_columns')
+           for col in categorical_columns:
+            st.write(f"**Frequency table for '{col}':**")
+            # Compute frequency counts and percentages
+            counts = data[col].value_counts(dropna=False)
+            percentages = data[col].value_counts(normalize=True, dropna=False) * 100
 
-                
-            if not selectedcolumns:
-                st.write("Please select at least one column.")
-            else:
-                for col in selectedcolumns:
-                    st.write(f"**Frequency table for '{col}':**")
-                    # Compute frequency counts and percentages
-                    counts = data[col].value_counts(dropna=False)
-                    percentages = data[col].value_counts(normalize=True, dropna=False) * 100
+            # Create the frequency table with 'Category' as a column
+            freq_table = pd.DataFrame({
+                col.title() : counts.index,
+                'Count': counts.values,
+                'Percentage (%)': percentages.round(2).values
+            })
 
-                    # Create the frequency table with 'Category' as a column
-                    freq_table = pd.DataFrame({
-                        'Category': counts.index,
-                        'Count': counts.values,
-                        'Percentage (%)': percentages.round(2).values
-                    })
+            # Calculate total counts and percentages
+            total_counts = counts.sum()
+            total_percentage = percentages.sum()
 
-                    # Calculate total counts and percentages
-                    total_counts = counts.sum()
-                    total_percentage = percentages.sum()
+            # Append the total row
+            total_row = pd.DataFrame({
+                col.title(): ['Total'],
+                'Count': [total_counts],
+                'Percentage (%)': [total_percentage.round(2)]
+            })
 
-                    # Append the total row
-                    total_row = pd.DataFrame({
-                        'Category': ['Total'],
-                        'Count': [total_counts],
-                        'Percentage (%)': [total_percentage.round(2)]
-                    })
+            freq_table = pd.concat([freq_table, total_row], ignore_index=True)
 
-                    freq_table = pd.concat([freq_table, total_row], ignore_index=True)
+            # Reset the index and drop the old index
+            freq_table.reset_index(drop=True, inplace=True)
 
+            # Display the frequency table without the extra index
+            st.write(freq_table)
 
-                    # # Create 'No.' column starting from 0
-                    # freq_table.insert(0, 'No.', range(len(freq_table)))
+        elif view_mode == 'Graph':
+            for col in categorical_columns:
+                # Compute frequency counts
+                counts = data[col].value_counts(dropna=False).reset_index()
+                counts.columns = ['Category', 'Count']
 
-                  
-                    # Reset the index and drop the old index
-                    freq_table.reset_index(drop=True, inplace=True)
+                # Create a horizontal bar graph using Plotly
+                fig = px.bar(
+                    counts,
+                    x='Count',
+                    y='Category',
+                    orientation='h',  # Horizontal bars
+                    title=f"Frequency of {col}",
+                    labels={'Category': col, 'Count': 'Number of Occurrences'},
+                    text='Count',  # Display count on bars
+                    template='plotly_white'  # Aesthetic theme
+                )
 
+                # Customize layout to include grid lines and improve readability
+                fig.update_layout(
+                    xaxis=dict(showgrid=True, gridwidth=1, gridcolor='lightgrey'),  # Add vertical grid lines
+                    yaxis=dict(showgrid=False),  # Remove horizontal grid lines
+                    title_font=dict(size=16),  # Larger title font
+                    font=dict(size=12),  # Adjust font size for better readability
+                    margin=dict(l=150, r=20, t=50, b=50),  # Adjust margins for long labels
+                    height=600  # Increase height for better spacing of bars
+                )
 
-                    # Display the frequency table without the extra index
-                    st.write(freq_table)
-
-
+                # Display the horizontal bar graph in Streamlit
+                st.plotly_chart(fig, use_container_width=True)
 
 
 elif view_option == 'Apply kmeans':
@@ -720,30 +744,11 @@ elif view_option == 'Apply apriori':
     else:
         data = st.session_state['data']
 
-        # # Since the victims gender and suspects have similar values of M and F. I am going to make them distinguished from one another
-        # custom_victimsgender_mapping = {
-        #     'M' : 'Male (Victim)',
-        #     'F' :  'Female (Victim)'
-        # }
-        # custom_suspectsgender_mapping = {
-        #     'M' : 'Male (Suspect)',
-        #     'F' : 'Female (Suspect)'
-        # }
-
-        #  # change the values using the custom mapping for victims gender
-        # data['victims gender'] = data['victims gender'].map(custom_victimsgender_mapping)
-
-        #  # change the values using the custom mapping for suspects gender
-        # data['suspects gender'] = data['suspects gender'].map(custom_suspectsgender_mapping)
-
-
         # Select columns for Apriori analysis
         st.write("Select the columns you want to include in the Apriori analysis:")
 
         # Get a list of columns that are categorical or can be treated as such
         potential_columns = data.select_dtypes(include=['object', 'category']).columns.tolist()
-
-
 
         selected_columns = st.multiselect("Columns", potential_columns, default=potential_columns, key='apriori_columns')
 
