@@ -66,7 +66,7 @@ protobuf==5.28.2
 psutil==6.0.0
 pure_eval==0.2.3
 pyarrow==17.0.0
-pycairo==1.27.0
+pycairo==1.27.0 # Only required for specific plotting tasks
 pydeck==0.9.1
 pydub==0.25.1
 pyglet==2.0.18
