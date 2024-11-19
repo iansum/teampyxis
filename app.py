@@ -11,7 +11,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from folium.plugins import HeatMap
 from branca.element import Template, MacroElement
-import plotly.express as     px # type: ignore
+import plotly.express as px # type: ignore
 
 
 
